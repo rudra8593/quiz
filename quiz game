@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brain Blast Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f0f4f8;
+            transition: background-color 0.5s;
+        }
+        
+        .quiz-container {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transform: translateY(0);
+            transition: transform 0.3s;
+        }
+        
+        .quiz-container:hover {
+            transform: translateY(-5px);
+        }
+        
+        .option {
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .option:hover {
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .correct {
+            background-color: #4ade80;
+            color: white;
+        }
+        
+        .incorrect {
+            background-color: #f87171;
+            color: white;
+        }
+        
+        .progress-bar {
+            transition: width 1s linear;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        .question-entry {
+            transition: all 0.5s;
+        }
+        
+        .hidden {
+            opacity: 0;
+            height: 0;
+            overflow: hidden;
+        }
+        
+        .visible {
+            opacity: 1;
+            height: auto;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="quiz-container bg-white rounded-xl p-8 w-full max-w-3xl">
+        <div id="start-screen" class="text-center">
+            <div class="flex justify-center mb-6">
+                <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/3ebf3784-73c1-43e5-803f-b4de93fc69b2.png" alt="Brain Blast Quiz Logo - Colorful cartoon brain with lightning bolts showcasing fast thinking and knowledge" class="rounded-full border-4 border-indigo-500" />
+            </div>
+            <h1 class="text-4xl font-bold text-indigo-700 mb-4">Brain Blast Quiz</h1>
+            <p class="text-gray-600 mb-8">Test your knowledge across various topics. Can you reach the top score?</p>
+            <button id="start-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-full text-lg transition duration-300 transform hover:scale-105">
+                Start Quiz
+            </button>
+        </div>
+
+        <div id="quiz-screen" class="hidden">
+            <div class="flex justify-between items-center mb-6">
+                <div class="text-lg font-semibold text-indigo-700">
+                    Question <span id="question-number">1</span>/<span id="total-questions">5</span>
+                </div>
+                <div class="text-lg font-semibold bg-gray-100 px-4 py-1 rounded-full">
+                    Score: <span id="score">0</span>
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div id="timer-bar" class="h-full bg-indigo-500 progress-bar" style="width: 100%;"></div>
+                </div>
+            </div>
+            
+            <div id="question-container" class="mb-8">
+                <h2 id="question" class="text-2xl font-bold text-gray-800 mb-6"></h2>
+                <div id="options" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+            
+            <div id="feedback" class="hidden p-4 rounded-lg mb-6 text-center"></div>
+            
+            <div id="next-btn-container" class="text-center hidden">
+                <button id="next-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-full text-lg transition duration-300 transform hover:scale-105">
+                    Next Question
+                </button>
+            </div>
+        </div>
+        
+        <div id="results-screen" class="hidden text-center">
+            <div class="mb-8">
+                <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/c8f0d73c-d679-45d5-9cd2-434c9f15f710.png" alt="Quiz Results - Trophy with celebratory confetti background showing achievement" class="mx-auto rounded-lg" />
+            </div>
+            <h2 class="text-3xl font-bold text-indigo-700 mb-4">Quiz Completed!</h2>
+            <p class="text-xl mb-6">Your final score is <span id="final-score" class="font-bold text-2xl">0</span>/<span id="max-score">5</span></p>
+            <div id="performance-message" class="text-xl mb-8"></div>
+            <button id="restart-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-full text-lg transition duration-300 transform hover:scale-105">
+                Try Again
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Quiz questions
+        const questions = [
+            {
+                question: "Which planet is known as the Red Planet?",
+                options: ["Venus", "Mars", "Jupiter", "Saturn"],
+                correctAnswer: 1
+            },
+            {
+                question: "What is the largest ocean on Earth?",
+                options: ["Atlantic Ocean", "Indian Ocean", "Arctic Ocean", "Pacific Ocean"],
+                correctAnswer: 3
+            },
+            {
+                question: "Which language has the most native speakers?",
+                options: ["English", "Hindi", "Mandarin Chinese", "Spanish"],
+                correctAnswer: 2
+            },
+            {
+                question: "In which year did the Titanic sink?",
+                options: ["1905", "1912", "1918", "1923"],
+                correctAnswer: 1
+            },
+            {
+                question: "Which element has the chemical symbol 'O'?",
+                options: ["Gold", "Oxygen", "Osmium", "Oganesson"],
+                correctAnswer: 1
+            }
+        ];
+
+        // Game state
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timer;
+        let timeLeft = 15;
+        let quizStarted = false;
+
+        // DOM elements
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultsScreen = document.getElementById('results-screen');
+        const questionElement = document.getElementById('question');
+        const optionsElement = document.getElementById('options');
+        const feedbackElement = document.getElementById('feedback');
+        const nextBtnContainer = document.getElementById('next-btn-container');
+        const nextBtn = document.getElementById('next-btn');
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const questionNumberElement = document.getElementById('question-number');
+        const totalQuestionsElement = document.getElementById('total-questions');
+        const scoreElement = document.getElementById('score');
+        const finalScoreElement = document.getElementById('final-score');
+        const maxScoreElement = document.getElementById('max-score');
+        const performanceMessageElement = document.getElementById('performance-message');
+        const timerBar = document.getElementById('timer-bar');
+
+        // Initialize quiz
+        function initQuiz() {
+            totalQuestionsElement.textContent = questions.length;
+            maxScoreElement.textContent = questions.length;
+            
+            startBtn.addEventListener('click', startQuiz);
+            nextBtn.addEventListener('click', nextQuestion);
+            restartBtn.addEventListener('click', restartQuiz);
+        }
+
+        // Start the quiz
+        function startQuiz() {
+            quizStarted = true;
+            startScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            showQuestion();
+        }
+
+        // Show current question
+        function showQuestion() {
+            const currentQuestion = questions[currentQuestionIndex];
+            questionElement.textContent = currentQuestion.question;
+            optionsElement.innerHTML = '';
+            
+            currentQuestion.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.classList.add('option', 'bg-gray-100', 'p-4', 'rounded-lg', 'mb-3', 'cursor-pointer');
+                optionElement.textContent = option;
+                optionElement.addEventListener('click', () => selectAnswer(index));
+                optionsElement.appendChild(optionElement);
+            });
+            
+            questionNumberElement.textContent = currentQuestionIndex + 1;
+            scoreElement.textContent = score;
+            
+            // Reset feedback and next button
+            feedbackElement.classList.add('hidden');
+            nextBtnContainer.classList.add('hidden');
+            
+            // Start timer
+            startTimer();
+        }
+
+        // Select answer
+        function selectAnswer(selectedIndex) {
+            if (!quizStarted) return;
+            
+            clearInterval(timer);
+            const currentQuestion = questions[currentQuestionIndex];
+            const options = optionsElement.querySelectorAll('.option');
+            
+            options.forEach((option, index) => {
+                option.classList.remove('bg-gray-100');
+                option.classList.add(index === currentQuestion.correctAnswer ? 'correct' : 'incorrect');
+                option.style.pointerEvents = 'none';
+            });
+            
+            options[selectedIndex].classList.add('selected');
+            
+            if (selectedIndex === currentQuestion.correctAnswer) {
+                score++;
+                scoreElement.textContent = score;
+                feedbackElement.textContent = 'Correct! 🎉';
+                feedbackElement.className = 'feedback bg-green-100 text-green-800';
+            } else {
+                feedbackElement.textContent = `Wrong! The correct answer is: ${currentQuestion.options[currentQuestion.correctAnswer]}`;
+                feedbackElement.className = 'feedback bg-red-100 text-red-800';
+            }
+            
+            feedbackElement.classList.remove('hidden');
+            nextBtnContainer.classList.remove('hidden');
+        }
+
+        // Start timer for current question
+        function startTimer() {
+            timeLeft = 15;
+            timerBar.style.width = '100%';
+            timerBar.style.transition = 'none';
+            setTimeout(() => {
+                timerBar.style.transition = 'width 1s linear';
+                timer = setInterval(() => {
+                    timeLeft--;
+                    timerBar.style.width = `${(timeLeft / 15) * 100}%`;
+                    
+                    if (timeLeft <= 0) {
+                        clearInterval(timer);
+                        timeUp();
+                    }
+                }, 1000);
+            }, 50);
+        }
+
+        // Time's up handler
+        function timeUp() {
+            const currentQuestion = questions[currentQuestionIndex];
+            const options = optionsElement.querySelectorAll('.option');
+            
+            options.forEach((option, index) => {
+                option.classList.remove('bg-gray-100');
+                option.classList.add(index === currentQuestion.correctAnswer ? 'correct' : 'incorrect');
+                option.style.pointerEvents = 'none';
+            });
+            
+            feedbackElement.textContent = `Time's up! The correct answer is: ${currentQuestion.options[currentQuestion.correctAnswer]}`;
+            feedbackElement.className = 'feedback bg-red-100 text-red-800';
+            feedbackElement.classList.remove('hidden');
+            nextBtnContainer.classList.remove('hidden');
+        }
+
+        // Move to next question
+        function nextQuestion() {
+            currentQuestionIndex++;
+            
+            if (currentQuestionIndex < questions.length) {
+                showQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        // Show results screen
+        function showResults() {
+            quizScreen.classList.add('hidden');
+            resultsScreen.classList.remove('hidden');
+            
+            finalScoreElement.textContent = score;
+            
+            const percentage = (score / questions.length) * 100;
+            let message;
+            
+            if (percentage >= 80) {
+                message = "Excellent work! You're a quiz master!";
+            } else if (percentage >= 60) {
+                message = "Good job! You know your stuff!";
+            } else if (percentage >= 40) {
+                message = "Not bad! You might want to brush up on some facts.";
+            } else {
+                message = "Keep learning! Everyone starts somewhere!";
+            }
+            
+            performanceMessageElement.textContent = message;
+        }
+
+        // Restart quiz
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            quizStarted = false;
+            
+            resultsScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+        }
+
+        // Initialize the quiz when the page loads
+        window.onload = initQuiz;
+    </script>
+</body>
+</html>
+
